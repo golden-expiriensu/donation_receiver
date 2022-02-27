@@ -4,7 +4,10 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum DonationError {
     #[error("Invalid PDA for this user")]
-    InvalidPDA
+    InvalidPDA,
+
+    #[error("Admin required")]
+    AdminRequired
 }
 
 impl From<DonationError> for ProgramError {
