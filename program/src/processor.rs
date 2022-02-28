@@ -13,6 +13,7 @@ use solana_program::{
 use crate::error::DonationError;
 use crate::selector::ProgramSelector;
 use crate::storage::{DonationPDA, Bank};
+use crate::{id};
 
 pub struct Processor;
 
@@ -40,10 +41,13 @@ impl Processor {
             return Err(ProgramError::MissingRequiredSignature);
         }
         if !DonationPDA::is_ok_donation_pda_pubkey(user.key, donation_pda.key) {
-            return Err(DonationError::InvalidPDA.into());
+            return Err(DonationError::InvalidPDAUser.into());
         }
         if !Bank::is_ok_bank_pubkey(bank.key) {
-            return Err(DonationError::InvalidPDA.into());
+            return Err(DonationError::InvalidPDAProgram.into());
+        }
+        if program_account.key.to_bytes() != id().to_bytes() {
+            return Err(DonationError::InvalidProgramAccount.into());
         }
 
         let mut donation_pda = DonationPDA::try_from_slice(&donation_pda.data.borrow())?;
@@ -69,12 +73,18 @@ impl Processor {
         if !admin.is_signer  {
             return Err(ProgramError::MissingRequiredSignature);
         }
+        if !Bank::is_ok_bank_pubkey(bank.key) {
+            return Err(DonationError::InvalidPDAProgram.into());
+        }
         
         let mut bank = Bank::try_from_slice(&bank.data.borrow())?;
 
         if bank.admin != admin.key.to_bytes() && bank.admin != [0; 32] {
             return Err(DonationError::AdminRequired.into());
         } 
+        if program_account.key.to_bytes() != id().to_bytes() {
+            return Err(DonationError::InvalidProgramAccount.into());
+        }
         
         invoke(
             &system_instruction::transfer(program_account.key, admin.key, bank.funds),
