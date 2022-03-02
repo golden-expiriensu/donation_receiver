@@ -1,7 +1,22 @@
+use solana_program::{
+    instruction::{AccountMeta, Instruction},
+    pubkey::Pubkey,
+    system_program, sysvar,
+};
 use borsh::{BorshDeserialize, BorshSerialize};
+
+use crate::{id, storage::Bank};
 
 #[derive(BorshSerialize, BorshDeserialize)]
 pub enum ProgramSelector {
+    /// Initialization method
+    /// Accounts:
+    /// 0. `[signer, writable]` admin
+    /// 1. `[writable]` Bank, program pda
+    /// 2. `[]` Rent sysvar
+    /// 3. `[]` System program
+    TransferOwnership { new_admin: [u8; 32] },
+    
     /// Make a donation to the platform
     /// Accounts:
     /// 0. `[signer, writable]` Debit lamports from this account
@@ -12,8 +27,27 @@ pub enum ProgramSelector {
 
     /// Withdraw all money from the platform
     /// Accounts:
-    /// 0. `[signer, writable]` An owner account, credit lamports to this account
+    /// 0. `[signer, writable]` An admin account, credit lamports to this account
     /// 1. `[writable]` Bank, program pda
     /// 2. `[writable]` System program, debit lamports from this account
     Withdraw
+}
+
+
+impl ProgramSelector {
+    pub fn transfer_ownership(
+        admin: &Pubkey,
+        new_admin: [u8; 32]
+    ) -> Instruction {
+        Instruction::new_with_borsh(
+            id(),
+            &ProgramSelector::TransferOwnership { new_admin },
+            vec![
+                AccountMeta::new(*admin, true),
+                AccountMeta::new(Bank::get_bank_pubkey(), false),
+                AccountMeta::new_readonly(sysvar::rent::id(), false),
+                AccountMeta::new_readonly(id(), false)
+            ]
+        )
+    }
 }

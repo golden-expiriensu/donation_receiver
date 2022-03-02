@@ -324,6 +324,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "charity"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1574,17 +1585,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0d8caf72986c1a598726adc988bb5984792ef84f5ee5aa50209145ee8077038"
 dependencies = [
  "unicode-xid",
-]
-
-[[package]]
-name = "program"
-version = "0.1.0"
-dependencies = [
- "borsh",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "thiserror",
 ]
 
 [[package]]

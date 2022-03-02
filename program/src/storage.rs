@@ -32,17 +32,13 @@ pub struct Bank {
 }
 
 impl Bank {
-    pub fn get_bank_pubkey_with_bump() -> (Pubkey, u8) {
-        Pubkey::find_program_address(&[BANK_PDA_SEED.as_bytes()], &id())
-    }
-
     pub fn get_bank_pubkey() -> Pubkey {
-        let (pubkey, _) = Self::get_bank_pubkey_with_bump();
+        let (pubkey, _) = Pubkey::find_program_address(&[BANK_PDA_SEED.as_bytes()], &id());
         pubkey
     }
 
     pub fn is_ok_bank_pubkey(bank_pubkey: &Pubkey) -> bool {
-        let (pubkey, _) = Self::get_bank_pubkey_with_bump();
+        let pubkey = Self::get_bank_pubkey();
         pubkey.to_bytes() == bank_pubkey.to_bytes()
     }
 }
