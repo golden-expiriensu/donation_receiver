@@ -5,9 +5,9 @@ use solana_program_test::{processor, tokio, ProgramTest, ProgramTestContext};
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::Transaction;
 
-use charity::{entrypoint::process_instruction, id, selector::ProgramSelector};
+use charity::{entrypoint::process_instruction, id, instruction::ProgramSelector};
 use charity::{
-    storage::{DonationPDA, Bank},
+    state::{DonationPDA, Bank},
     DONATION_PDA_SEED,
 };
 

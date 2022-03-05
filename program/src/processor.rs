@@ -12,8 +12,8 @@ use solana_program::{
 
 
 use crate::error::DonationError;
-use crate::selector::ProgramSelector;
-use crate::storage::{DonationPDA, Bank};
+use crate::instruction::ProgramSelector;
+use crate::state::{DonationPDA, Bank};
 use crate::{id, BANK_PDA_SEED};
 
 pub struct Processor;

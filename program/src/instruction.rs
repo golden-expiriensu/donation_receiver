@@ -5,7 +5,7 @@ use solana_program::{
 };
 use borsh::{BorshDeserialize, BorshSerialize};
 
-use crate::{id, storage::{ Bank, DonationPDA }};
+use crate::{id, state::{ Bank, DonationPDA }};
 
 #[derive(BorshSerialize, BorshDeserialize)]
 pub enum ProgramSelector {
