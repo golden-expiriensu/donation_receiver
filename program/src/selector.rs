@@ -5,7 +5,7 @@ use solana_program::{
 };
 use borsh::{BorshDeserialize, BorshSerialize};
 
-use crate::{id, storage::Bank};
+use crate::{id, storage::{ Bank, DonationPDA }};
 
 #[derive(BorshSerialize, BorshDeserialize)]
 pub enum ProgramSelector {
@@ -47,6 +47,34 @@ impl ProgramSelector {
                 AccountMeta::new(Bank::get_bank_pubkey(), false),
                 AccountMeta::new_readonly(sysvar::rent::id(), false),
                 AccountMeta::new_readonly(id(), false)
+            ]
+        )
+    }
+
+    pub fn donate(
+        user: &Pubkey,
+        amount: u64
+    ) -> Instruction {
+        Instruction::new_with_borsh(
+            id(),
+            &ProgramSelector::Donate { amount },
+            vec![
+                AccountMeta::new(*user, true),
+                AccountMeta::new(DonationPDA::get_donation_pda_pubkey(&user), false),
+                AccountMeta::new(Bank::get_bank_pubkey(), false),
+                AccountMeta::new(id(), false)
+            ]
+        )
+    }
+
+    pub fn withdraw(admin: &Pubkey) -> Instruction {
+        Instruction::new_with_borsh(
+            id(),
+            &ProgramSelector::Withdraw,
+            vec![
+                AccountMeta::new(*admin, true),
+                AccountMeta::new(Bank::get_bank_pubkey(), false),
+                AccountMeta::new(id(), false)
             ]
         )
     }

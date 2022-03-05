@@ -40,9 +40,7 @@ impl RuntimeEnviroment {
 
         ctx.banks_client.process_transaction(
             Transaction::new_signed_with_payer(
-                &[
-                    ProgramSelector::transfer_ownership(&owner, owner.clone())
-                ],
+                &[ProgramSelector::transfer_ownership(&owner, owner.clone())],
                 Some(&ctx.payer.pubkey()),
                 &ctx.payer,
                 ctx.last_block_hash
