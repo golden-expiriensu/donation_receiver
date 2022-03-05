@@ -76,3 +76,28 @@ impl RuntimeEnviroment {
         RuntimeEnviroment { ctx, admin, user }
     }
 }
+
+#[tokio::test]
+async fn donation_test() {
+    let env = RuntimeEnviroment::new();
+    const donation_amount: u64 = 1**7;
+
+    let mut env = Env::new().await;
+
+    env.ctx.banks_client.process_transaction(
+        Transaction::new_signed_with_payer(
+            &[ProgramSelector::donate(&env.user.pubkey(), donation_amount)],
+            Some(&env.user.pubkey()),
+            &user,
+            env.ctx.last_blockhash
+        )
+    ).await.unwrap();
+
+    let donation_pda_account = env.ctx.banks_client.get_account(
+        DonationPDA::get_donation_pda_pubkey(&env.user.pubkey())
+    ).await.unwrap().unwrap();
+
+    let donation_pda = DonationPDA::try_from_slice(donation_pda_account::data::as_slice()).unwrap();
+
+    assert_eq!(donation_pda.total_donated, donation_amount);
+}

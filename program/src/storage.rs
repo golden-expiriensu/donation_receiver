@@ -21,14 +21,14 @@ impl DonationPDA {
 /// There is only one bank account. All donation accounts use it.
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub struct Bank {
-    /// Only admin can change this account
+    /// Only admin can withdraw funds
     pub admin: [u8; 32],
 
     /// Available to withdraw amount
     pub funds: u64,
 
-    // List of all users
-    // ???
+    /// A list of all users who have ever donated
+    pub donaters: Vec<[u8; 32]>
 }
 
 impl Bank {

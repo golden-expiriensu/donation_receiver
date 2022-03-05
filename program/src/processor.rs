@@ -34,7 +34,7 @@ impl Processor {
         }
     }
 
-    fn transfer_ownership(accounts: &[AccountInfo], admin: [u8; 32]) -> ProgramResult {
+    fn transfer_ownership(accounts: &[AccountInfo], new_admin: [u8; 32]) -> ProgramResult {
         let accounts_iter = &mut accounts.iter();
         let admin = next_account_info(accounts_iter)?;
         let bank = next_account_info(accounts_iter)?;
@@ -49,14 +49,14 @@ impl Processor {
         }
 
         if bank.data_is_empty() {
-            let bank_instance = Bank { admin: admin.key.to_bytes(), funds: 0 };
+            let bank_instance = Bank { admin: admin.key.to_bytes(), funds: 0, donaters: Vec::new() };
             let allocated_space = bank_instance.try_to_vec()?.len();
             let rent = &Rent::from_account_info(rent)?;
             let lamports = rent.minimum_balance(allocated_space);
             let signer_seeds: &[&[_]] = &[BANK_PDA_SEED.as_bytes(), &id().to_bytes()];
             invoke_signed(
                 &system_instruction::create_account(
-                    admin.key,
+                    &system.key,
                     &Bank::get_bank_pubkey(),
                     lamports,
                     allocated_space as u64,
@@ -73,7 +73,7 @@ impl Processor {
             return Err(DonationError::AdminRequired.into());
         }
 
-        bank.admin = admin.key.to_bytes();            
+        bank.admin = new_admin;            
         
         Ok(())
     }
@@ -105,6 +105,10 @@ impl Processor {
             &system_instruction::transfer(user.key, program.key, amount),
             &[user.clone(), program.clone()],
         )?;
+
+        if donation_pda.total_donated == 0 && amount > 0 {
+            bank.donaters.push(user.key.to_bytes())
+        }
 
         donation_pda.total_donated += amount;
         bank.funds += amount;
