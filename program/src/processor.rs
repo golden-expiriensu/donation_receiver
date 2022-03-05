@@ -1,9 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
-    entrypoint,
     entrypoint::ProgramResult,
-    msg,
     program::invoke,
     program_error::ProgramError,
     pubkey::Pubkey,
@@ -56,7 +54,7 @@ impl Processor {
             let signer_seeds: &[&[_]] = &[BANK_PDA_SEED.as_bytes(), &id().to_bytes()];
             invoke_signed(
                 &system_instruction::create_account(
-                    &system.key,
+                    &admin.key,
                     &Bank::get_bank_pubkey(),
                     lamports,
                     allocated_space as u64,

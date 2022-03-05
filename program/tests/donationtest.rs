@@ -1,4 +1,3 @@
-#![cfg(feature = "test-bpf")]
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::pubkey::Pubkey;
 use solana_program::system_instruction;
@@ -15,52 +14,54 @@ use charity::{
 struct RuntimeEnviroment {
     ctx: ProgramTestContext,
     admin: Keypair,
-    admin: Keypair
+    user: Keypair
 }
 
 impl RuntimeEnviroment {
-    fn init() -> Self {
+    async fn init() -> Self {
         let program = ProgramTest::new("charity", id(), processor!(process_instruction));
         let mut ctx = program.start_with_context().await;
 
-        let owner = Keypair::new();
+        let admin = Keypair::new();
         let user = Keypair::new();
 
         ctx.banks_client.process_transaction(
             Transaction::new_signed_with_payer(
                 &[
-                    system_instruction::transfer(&ctx.payer, &owner, 1**9),
-                    system_instruction::transfer(&ctx.payer, &user, 1**9)
+                    system_instruction::transfer(&ctx.payer.pubkey(), &admin.pubkey(), 1_000_000_000),
+                    system_instruction::transfer(&ctx.payer.pubkey(), &user.pubkey(), 1_000_000_000)
                 ], 
                 Some(&ctx.payer.pubkey()),
-                &ctx.payer,
-                ctx.last_block_hash
+                &[&ctx.payer],
+                ctx.last_blockhash
             )
         ).await.unwrap();
 
         ctx.banks_client.process_transaction(
             Transaction::new_signed_with_payer(
-                &[ProgramSelector::transfer_ownership(&owner, owner.clone())],
-                Some(&ctx.payer.pubkey()),
-                &ctx.payer,
-                ctx.last_block_hash
+                &[ProgramSelector::transfer_ownership(&admin.pubkey(), admin.pubkey().to_bytes())],
+                Some(&admin.pubkey()),
+                &[&admin],
+                ctx.last_blockhash
             )
-        ).await.unwap();
+        ).await.unwrap();
 
-        let acc = ctx.banks_client.get_account(Bank::get_bank_pubkey()).await.unwrap().unwrap();
-        let bank = Bank::try_from_slice(acc.data.as_slice()).unwrap();
+        let bank_account = ctx.banks_client.get_account(Bank::get_bank_pubkey()).await.unwrap().unwrap();
+        let bank = Bank::try_from_slice(bank_account.data.as_slice()).unwrap();
+
+        assert_eq!(bank.admin, admin.pubkey().to_bytes());
 
         // init user's donation pda
-        let allocSpace = DonationPDA { total_donated: 0 }.try_to_vec().unwrap().len();
+        let alloc_space = DonationPDA { total_donated: 0 }.try_to_vec().unwrap().len();
         let rent = ctx.banks_client.get_rent().await.unwrap();
-        let lamports = rent.minimum_balance(allocSpace);
+        let lamports = rent.minimum_balance(alloc_space);
         let instruction = system_instruction::create_account_with_seed(
             &user.pubkey(),
             &DonationPDA::get_donation_pda_pubkey(&user.pubkey()),
             &user.pubkey(),
             DONATION_PDA_SEED,
             lamports,
-            allocSpace as u64,
+            alloc_space as u64,
             &id(),
         );
         let tx = Transaction::new_signed_with_payer(
@@ -77,16 +78,14 @@ impl RuntimeEnviroment {
 
 #[tokio::test]
 async fn donation_test() {
-    let env = RuntimeEnviroment::new();
-    const donation_amount: u64 = 1**7;
-
-    let mut env = Env::new().await;
+    let mut env = RuntimeEnviroment::init().await;
+    const DONATION_AMOUNT: u64 = 10_000_000;
 
     env.ctx.banks_client.process_transaction(
         Transaction::new_signed_with_payer(
-            &[ProgramSelector::donate(&env.user.pubkey(), donation_amount)],
+            &[ProgramSelector::donate(&env.user.pubkey(), DONATION_AMOUNT)],
             Some(&env.user.pubkey()),
-            &user,
+            &[&env.user],
             env.ctx.last_blockhash
         )
     ).await.unwrap();
@@ -95,7 +94,7 @@ async fn donation_test() {
         DonationPDA::get_donation_pda_pubkey(&env.user.pubkey())
     ).await.unwrap().unwrap();
 
-    let donation_pda = DonationPDA::try_from_slice(donation_pda_account::data::as_slice()).unwrap();
+    let donation_pda = DonationPDA::try_from_slice(donation_pda_account.data.as_slice()).unwrap();
 
-    assert_eq!(donation_pda.total_donated, donation_amount);
+    assert_eq!(donation_pda.total_donated, DONATION_AMOUNT);
 }

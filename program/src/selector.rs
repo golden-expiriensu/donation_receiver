@@ -46,7 +46,7 @@ impl ProgramSelector {
                 AccountMeta::new(*admin, true),
                 AccountMeta::new(Bank::get_bank_pubkey(), false),
                 AccountMeta::new_readonly(sysvar::rent::id(), false),
-                AccountMeta::new_readonly(id(), false)
+                AccountMeta::new_readonly(system_program::id(), false)
             ]
         )
     }
