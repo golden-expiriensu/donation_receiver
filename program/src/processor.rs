@@ -5,7 +5,7 @@ use solana_program::{
     program::invoke,
     program_error::ProgramError,
     pubkey::Pubkey,
-    system_instruction,
+    {system_instruction, msg},
     sysvar::{rent::Rent, Sysvar},
     program::invoke_signed
 };
@@ -52,10 +52,12 @@ impl Processor {
             let rent = &Rent::from_account_info(rent)?;
             let lamports = rent.minimum_balance(allocated_space);
             let signer_seeds: &[&[_]] = &[BANK_PDA_SEED.as_bytes(), &id().to_bytes()];
+            msg!("{:?}", bank.key.to_string());
+
             invoke_signed(
                 &system_instruction::create_account(
-                    &admin.key,
-                    &Bank::get_bank_pubkey(),
+                    admin.key,
+                    bank.key,
                     lamports,
                     allocated_space as u64,
                     &id(),
